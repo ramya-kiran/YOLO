@@ -1,4 +1,5 @@
 import tensorflow as tf
+import global_declare.py
 ALPHA = 0.1
 
 
