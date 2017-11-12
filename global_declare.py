@@ -1,6 +1,6 @@
 # paths
 IMAGE_PATH = '/scratch/ramrao/vehicles/train.txt'
-LABEL_PATH = '/scratch/ramrao/vehicles/labels.txt'
+LABEL_PATH = '/scratch/ramrao/vehicles/label.txt'
 
 # Image dimensions
 IN_HEIGHT = 448
@@ -9,7 +9,7 @@ CHANNEL = 3
 IMAGE_SIZE = 448
 
 # cell grid size
-GRID_SIZE = 11
+GRID_SIZE = 7
 NO_BOUNDING_BOX = 2
 NO_CLASSES = 9
 

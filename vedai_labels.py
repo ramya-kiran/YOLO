@@ -1,4 +1,5 @@
 import os
+from global_declare import *
 
 def yolo_annot(root, dest, w_h_ratio):
     for r,d,c in os.walk(root):
@@ -43,8 +44,8 @@ def yolo_annot(root, dest, w_h_ratio):
                     ymax = max(float(line[10]), float(line[11]), float(line[12]), float(line[13])) * w_h_ratio
                     box = (float(line[0]) * w_h_ratio, float(line[1]) * w_h_ratio, float(xmax - xmin), float(ymax - ymin))
                     v = 1.0/448
-                    box = (box[0], box[1] , box[2] , box[3] )
-                    if(box[2] < 0 or box[3] < 0):
+                    box = (min(box[0], IMAGE_SIZE-1), min(box[1], IMAGE_SIZE-1) , min(box[2], IMAGE_SIZE-1) , min(box[3], IMAGE_SIZE-1))
+                    if(box[0] > 448 or box[1] > 448):
                         print(f)
                         print(box)
                     
