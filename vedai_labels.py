@@ -43,7 +43,7 @@ def yolo_annot(root, dest, w_h_ratio):
                     ymax = max(float(line[10]), float(line[11]), float(line[12]), float(line[13])) * w_h_ratio
                     box = (float(line[0]) * w_h_ratio, float(line[1]) * w_h_ratio, float(xmax - xmin), float(ymax - ymin))
                     v = 1.0/448
-                    box = (box[0] * v , box[1] * v, box[2] *v, box[3] *v)
+                    box = (box[0], box[1] , box[2] , box[3] )
                     if(box[2] < 0 or box[3] < 0):
                         print(f)
                         print(box)
