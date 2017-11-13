@@ -50,11 +50,11 @@ if __name__ == '__main__':
         
         for i in range(args.epochs):
             images, labels = sess.run(batch)
-            sess.run(train, feed_dict={X: images, y: labels})
+            sess.run(optimizer, feed_dict={X: images, y: labels})
             
             # Print training accuracy every 100 epochs
             if (i+1) % 100 == 0:
-                print('loss val {}: {:.2f}'.format(i+1, sess.run(loss_val, feed_dict={X1: images1, X2:images2, y: labels1})))
+                print('loss val {}: {:.2f}'.format(i+1, sess.run(total_loss, feed_dict={X: images, y: labels})))
                 
             if (i+1) % 1000 == 0:
                 params = saver.save(sess, '{}_{}.ckpt'.format(args.output, i+1))
