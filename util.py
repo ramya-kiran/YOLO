@@ -33,6 +33,39 @@ def fc_layer(input_tensor, no_out, no_in, leaky):
         
         return(tf.maximum(ALPHA*y, y, name='fc_out'+name))
 
+def cal_iou(boxes1, boxes2):
+    with tf.variable_scope('iou'):
+        boxes1 = tf.stack([boxes1[:, :, :, :, 0] - boxes1[:, :, :, :, 2] / 2.0,
+                           boxes1[:, :, :, :, 1] - boxes1[:, :, :, :, 3] / 2.0,
+                           boxes1[:, :, :, :, 0] + boxes1[:, :, :, :, 2] / 2.0,
+                           boxes1[:, :, :, :, 1] + boxes1[:, :, :, :, 3] / 2.0])
+        boxes1 = tf.transpose(boxes1, [1, 2, 3, 4, 0])
+        
+        boxes2 = tf.stack([boxes2[:, :, :, :, 0] - boxes2[:, :, :, :, 2] / 2.0,
+                           boxes2[:, :, :, :, 1] - boxes2[:, :, :, :, 3] / 2.0,
+                           boxes2[:, :, :, :, 0] + boxes2[:, :, :, :, 2] / 2.0,
+                           boxes2[:, :, :, :, 1] + boxes2[:, :, :, :, 3] / 2.0])
+        boxes2 = tf.transpose(boxes2, [1, 2, 3, 4, 0])
+
+        # calculate the left up point & right down point
+        lu = tf.maximum(boxes1[:, :, :, :, :2], boxes2[:, :, :, :, :2])
+        rd = tf.minimum(boxes1[:, :, :, :, 2:], boxes2[:, :, :, :, 2:])
+        
+        # intersection
+        intersection = tf.maximum(0.0, rd - lu)
+        inter_square = intersection[:, :, :, :, 0] * intersection[:, :, :, :, 1]
+        
+        # calculate the boxs1 square and boxs2 square
+        square1 = (boxes1[:, :, :, :, 2] - boxes1[:, :, :, :, 0]) * \
+                  (boxes1[:, :, :, :, 3] - boxes1[:, :, :, :, 1])
+        square2 = (boxes2[:, :, :, :, 2] - boxes2[:, :, :, :, 0]) * \
+                  (boxes2[:, :, :, :, 3] - boxes2[:, :, :, :, 1])
+
+        union_square = tf.maximum(square1 + square2 - inter_square, 1e-10)
+
+        return tf.clip_by_value(inter_square / union_square, 0.0, 1.0)
+
+
 
 # loss layer
 def loss_layer(pred, actual, batch_size):
@@ -63,4 +96,53 @@ def loss_layer(pred, actual, batch_size):
 
         iou_predict_truth = cal_iou(predict_box_tran,boxes)
 
+        # calculate I tensor [BATCH_SIZE, CELL_SIZE, CELL_SIZE, BOXES_PER_CELL]
+        object_mask = tf.reduce_max(iou_predict_truth, 3, keep_dims=True)
+        object_mask = tf.cast((iou_predict_truth >= object_mask), tf.float32) * response
+
+        # calculate no_I tensor [CELL_SIZE, CELL_SIZE, BOXES_PER_CELL]
+        noobject_mask = tf.ones_like(object_mask, dtype=tf.float32) - object_mask
         
+        boxes_tran = tf.stack([boxes[:, :, :, :, 0] * self.cell_size - offset,
+                               boxes[:, :, :, :, 1] * self.cell_size - tf.transpose(offset, (0, 2, 1, 3)),
+                               tf.sqrt(boxes[:, :, :, :, 2]),
+                               tf.sqrt(boxes[:, :, :, :, 3])])
+        boxes_tran = tf.transpose(boxes_tran, [1, 2, 3, 4, 0])
+        
+        # class_loss
+        class_delta = response * (pred_classes - classes)
+        class_loss = tf.reduce_mean(tf.reduce_sum(tf.square(class_delta), axis=[1, 2, 3]), name='class_loss') * CLASS_SCALE
+
+        # object_loss
+        object_delta = object_mask * (predict_scales - iou_predict_truth)
+        object_loss = tf.reduce_mean(tf.reduce_sum(tf.square(object_delta), axis=[1, 2, 3]), name='object_loss') * OBJ_SCALE
+        
+        # noobject_loss
+        noobject_delta = noobject_mask * predict_scales
+        noobject_loss = tf.reduce_mean(tf.reduce_sum(tf.square(noobject_delta), axis=[1, 2, 3]), name='noobject_loss') * NOOBJ_SCALE
+
+        # coord_loss
+        coord_mask = tf.expand_dims(object_mask, 4)
+        boxes_delta = coord_mask * (pred_boxes - boxes_tran)
+        coord_loss = tf.reduce_mean(tf.reduce_sum(tf.square(boxes_delta), axis=[1, 2, 3, 4]), name='coord_loss') * COORD_SCALE
+
+        tf.losses.add_loss(class_loss)
+        tf.losses.add_loss(object_loss)
+        tf.losses.add_loss(noobject_loss)
+        tf.losses.add_loss(coord_loss)
+
+        tf.summary.scalar('class_loss', class_loss)
+        tf.summary.scalar('object_loss', object_loss)
+        tf.summary.scalar('noobject_loss', noobject_loss)
+        tf.summary.scalar('coord_loss', coord_loss)
+        
+        tf.summary.histogram('boxes_delta_x', boxes_delta[:, :, :, :, 0])
+        tf.summary.histogram('boxes_delta_y', boxes_delta[:, :, :, :, 1])
+        tf.summary.histogram('boxes_delta_w', boxes_delta[:, :, :, :, 2])
+        tf.summary.histogram('boxes_delta_h', boxes_delta[:, :, :, :, 3])
+        tf.summary.histogram('iou', iou_predict_truth)
+        
+        return tf.losses.get_total_loss()
+
+        
+            
