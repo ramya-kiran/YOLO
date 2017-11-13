@@ -27,6 +27,14 @@ if __name__ == '__main__':
     # passing the parameters to modela and getting output
     y_hat = model(X)
 
+    total_loss = loss_layer(y_hat, y, args.batch_size)
+    tf.summary.scalar('total_loss', total_loss)
+    
+    global_step = tf.get_variable(
+            'global_step', [], initializer=tf.constant_initializer(0), trainable=False)
+    learning_rate = tf.train.exponentail_decay(INITIAL_LEARNING_RATE, global_step, DECAY_STEPS, DECAY_RATE, STAIRCASE, name='learning_rate')
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate = learning_rate).minimize(total_loss, global_step = global_step)
+
     saver = tf.train.Saver()
 
     with tf.Session() as sess:
