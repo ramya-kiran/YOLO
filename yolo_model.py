@@ -36,9 +36,11 @@ def model(input_tensor):
     # output = [batch_size, 7*7*1024]
     flatten_1 = tf.reshape(conv_8_out, [-1, 7*7*1024])
     
-    fc_1_out = fc_layer(flatten_1, 256, 7*7*1024, True)
-    fc_2_out = fc_layer(fc_1_out, 256, 256, True)
-    fc_3_out = fc_layer(fc_2_out, 256, 4096, True)
+    # with tf.Session() as sess:
+    #     print(sess.run(tf.shape(flatten_1)))
+    fc_1_out = fc_layer(flatten_1, 7*7*1024, 256, True, '9')
+    fc_2_out = fc_layer(fc_1_out, 256, 256, True, '10')
+    fc_3_out = fc_layer(fc_2_out, 4096, 256, True, '11')
 
     return fc_3_out
     

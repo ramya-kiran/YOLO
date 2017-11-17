@@ -70,9 +70,9 @@ def pooling_layer(input_tensor, pool_size, pool_stride, name):
 
 
 # fully connected layer
-def fc_layer(input_tensor, no_out, no_in, leaky):
+def fc_layer(input_tensor, no_out, no_in, leaky, name):
     with tf.name_scope('fc_'+name):
-        weights = tf.get_variable("fc_w_"+name, [no_in, no_out], initializer=tf.contrib.layers.xavier_initializer())
+        weights = tf.get_variable("fc_w_"+name, [no_out, no_in], initializer=tf.contrib.layers.xavier_initializer())
         biases = tf.get_variable("fc_b_"+name, [no_out], initializer=tf.constant_initializer(0.0))
         y = tf.add(tf.matmul(input_tensor, weights), biases)
         tf.summary.histogram('fc_w'+name, weights)
