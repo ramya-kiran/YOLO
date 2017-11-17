@@ -21,7 +21,7 @@ if __name__ == '__main__':
     batch = tf.train.shuffle_batch([image, label], batch_size=args.batch_size, capacity=800, num_threads=2, min_after_dequeue=200)
     
     # placeholders for input and labels
-    X = tf.placeholder(tf.float32, [None, IMAGE_SIZE IMAGE_SIZE, CHANNEL], name='X')
+    X = tf.placeholder(tf.float32, [None, IMAGE_SIZE, IMAGE_SIZE, CHANNEL], name='X')
     y = tf.placeholder(tf.float32, [None, GRID_SIZE, GRID_SIZE, 5+NO_CLASSES], name='labels')
     
     # passing the parameters to modela and getting output

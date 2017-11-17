@@ -1,4 +1,4 @@
-import util.py
+from util import *
 import tensorflow as tf
 
 
