@@ -11,14 +11,15 @@ import os
 def _bytes_feature(value):
     return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
 
-
-def get_images():
-    # with open(IMAGE_PATH, 'r') as rf:
-    #     names = rf.readlines()
+def get_file_names():
+    result = []
     for r,d,f in os.walk('/scratch/ramrao/vehicles/JPEGImages/'):
-        names = f
-    print(names)
-    images = np.zeros((len(names), IN_HEIGHT, IN_WIDTH, CHANNEL), dtype=np.uint8)
+        for i in f:
+            result.append(os.path.join(r,i))
+    return result
+
+def get_images(names):
+    images = np.zeros((len(names), 448, 448, CHANNEL), dtype=np.uint8)
     
     os.chdir('/scratch/ramrao/vehicles/JPEGImages/')
     for index,value in enumerate(names):
@@ -30,17 +31,15 @@ def get_images():
     return images
         
 
-def get_labels():
-    # with open(LABEL_PATH, 'r') as rf:
-    #     names = rf.readlines()
-    for r,d,f in os.walk('/scratch/ramrao/vehicles/labels/'):
-        names = f
-    print(names)
-
+def get_labels(names):
     labels = np.zeros((len(names), GRID_SIZE, GRID_SIZE, 5+NO_CLASSES), dtype=np.uint8)
     os.chdir('/scratch/ramrao/vehicles/labels/')
     for index,value in enumerate(names):
         to_store = np.zeros((GRID_SIZE, GRID_SIZE, 5+NO_CLASSES))
+        file_val = os.path.basename(os.path.normpath(value))
+        file_val = file_val[:-4] + '.txt'
+        value = os.path.join('/scratch/ramrao/vehicles/labels',file_val)
+        print(value)
         with open(value, 'r') as lf:
             print(value)
             annot = lf.readlines()
@@ -78,8 +77,9 @@ def main():
     parser.add_argument('-o', '--output', default='result.tfrecords', help='output filename, default to result.tfrecords')
 
     args = parser.parse_args()
-    images = get_images()
-    labels = get_labels()
+    res = get_file_names()
+    images = get_images(res)
+    labels = get_labels(res)
     convert(images, labels, args.output)
 
 
