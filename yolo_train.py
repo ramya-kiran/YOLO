@@ -52,14 +52,13 @@ if __name__ == '__main__':
         
         for i in range(args.epochs):
             img, lbl = sess.run(batch)
-            print(sess.run(total_loss, feed_dict={X: img, y: lbl}))
             sess.run(train, feed_dict={X: img, y: lbl})
             
             #Print training accuracy every 100 epochs
-            if (i+1) % 100 == 0:
+            if (i+1) % 89 == 0:
                 print('loss val {}: {:.2f}'.format(i+1, sess.run(total_loss, feed_dict={X:img, y:lbl})))
                 
-            if (i+1) % 1000 == 0:
+            if (i+1) % 89 == 0:
                 params = saver.save(sess, '{}_{}.ckpt'.format(args.output, i+1))
                 print('Model saved: {}'.format(params))
                 
