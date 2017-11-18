@@ -29,21 +29,22 @@ if __name__ == '__main__':
     y_hat = model(X)
     
     total_loss = loss_layer(y_hat, y, args.batch_size)
-    #tf.summary.scalar('total_loss', total_loss)
+    tf.summary.scalar('total_loss', total_loss)
     
     #global_step = tf.get_variable(
-    #         'global_step', [], initializer=tf.constant_initializer(0), trainable=False)
-    # learning_rate = tf.train.exponentail_decay(INITIAL_LEARNING_RATE, global_step, DECAY_STEPS, DECAY_RATE, STAIRCASE, name='learning_rate')
-    # optimizer = tf.train.GradientDescentOptimizer(learning_rate = learning_rate).minimize(total_loss, global_step = global_step)
-
+#            'global_step', [], initializer=tf.constant_initializer(0), trainable=False)
+    #learning_rate = tf.train.exponentail_decay(INITIAL_LEARNING_RATE, global_step, DECAY_STEPS, DECAY_RATE, STAIRCASE, name='learning_rate')
+    #optimizer = tf.train.GradientDescentOptimizer(learning_rate = INITIAL_LEARNING_RATE).minimize(total_loss, global_step = global_step)
+    train = tf.train.AdamOptimizer(1e-4).minimize(total_loss)
+    
     saver = tf.train.Saver()
 
     with tf.Session() as sess:
         sess.run(tf.local_variables_initializer())
         sess.run(tf.global_variables_initializer())
         
-        #merged_summary = tf.summary.merge_all()
-        #writer = tf.summary.FileWriter(args.log, sess.graph)
+        merged_summary = tf.summary.merge_all()
+        writer = tf.summary.FileWriter(args.log, sess.graph)
         
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(sess=sess, coord=coord)
@@ -52,15 +53,15 @@ if __name__ == '__main__':
         for i in range(args.epochs):
             img, lbl = sess.run(batch)
             print(sess.run(total_loss, feed_dict={X: img, y: lbl}))
-            #sess.run(optimizer, feed_dict={X: images, y: labels})
+            sess.run(train, feed_dict={X: img, y: lbl})
             
-            # Print training accuracy every 100 epochs
-            # if (i+1) % 100 == 0:
-            #     #print('loss val {}: {:.2f}'.format(i+1, sess.run(total_loss, feed_dict={X: images, y: labels})))
+            #Print training accuracy every 100 epochs
+            if (i+1) % 100 == 0:
+                print('loss val {}: {:.2f}'.format(i+1, sess.run(total_loss, feed_dict={X:img, y:lbl})))
                 
-            # if (i+1) % 1000 == 0:
-            #     params = saver.save(sess, '{}_{}.ckpt'.format(args.output, i+1))
-            #     print('Model saved: {}'.format(params))
+            if (i+1) % 1000 == 0:
+                params = saver.save(sess, '{}_{}.ckpt'.format(args.output, i+1))
+                print('Model saved: {}'.format(params))
                 
         coord.request_stop()
         coord.join(threads)
