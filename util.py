@@ -1,5 +1,6 @@
 import tensorflow as tf
 from global_declare import *
+import numpy as np
 
 # reading and decoding tf records
 
@@ -50,10 +51,9 @@ def alter_image(image):
 
 
 # convolutional layer to be used by the model 
-def convolution_layer(input_imgs, outputs, size, stride, name):
+def convolution_layer(input_imgs, outputs, in_size, stride, name):
     with tf.name_scope('conv_' + name):
-        channels = input_imgs.get_shape()[3]
-        weights = tf.get_variable("w_"+name, [size, size, channels, outputs], initializer=tf.contrib.layers.xavier_initializer())
+        weights = tf.get_variable("w_"+name, [3, 3, in_size, outputs], initializer=tf.contrib.layers.xavier_initializer())
         biases = tf.get_variable("b_"+name, [outputs], initializer=tf.constant_initializer(0.0))
         tf.summary.histogram('conv_w_'+name, weights)
         tf.summary.histogram('conv_b_'+name, biases)
@@ -67,12 +67,12 @@ def convolution_layer(input_imgs, outputs, size, stride, name):
 def pooling_layer(input_tensor, pool_size, pool_stride, name):
     with tf.name_scope('pool_'+name):
         return tf.nn.max_pool(input_tensor, ksize=[1,pool_size, pool_size, 1], strides=[1,pool_stride, pool_stride,1], padding='SAME', name = 'pool_'+name)
-
+        
 
 # fully connected layer
-def fc_layer(input_tensor, no_out, no_in, leaky, name):
+def fc_layer(input_tensor, no_in, no_out, leaky, name):
     with tf.name_scope('fc_'+name):
-        weights = tf.get_variable("fc_w_"+name, [no_out, no_in], initializer=tf.contrib.layers.xavier_initializer())
+        weights = tf.get_variable("fc_w_"+name, [no_in, no_out], initializer=tf.contrib.layers.xavier_initializer())
         biases = tf.get_variable("fc_b_"+name, [no_out], initializer=tf.constant_initializer(0.0))
         y = tf.add(tf.matmul(input_tensor, weights), biases)
         tf.summary.histogram('fc_w'+name, weights)
@@ -116,14 +116,15 @@ def cal_iou(boxes1, boxes2):
 
 # loss layer
 def loss_layer(pred, actual, batch_size):
-    with tf.name_Scope('loss_layer'):
+    with tf.name_scope('loss_layer'):
         val_1 = GRID_SIZE * GRID_SIZE * NO_CLASSES
         val_2 = val_1 + (GRID_SIZE * GRID_SIZE * NO_BOUNDING_BOX)
-        pred_classes = np.reshape(pred[:, : val_1], [batch_size, GRID_SIZE, GRID_SIZE, NO_CLASSES])
-        pred_scales = np.reshape(pred[:, val_1: val_2], [batch_size, GRID_SIZE, GRID_SIZE, NO_BOUNDING_BOX])
-        pred_boxes = np.reshape(pred[:, val_2:], [batch_size, GRID_SIZE, GRID_SIZE, NO_BOUNDING_BOX, 4])
         
-        response = tf.reshape(actual[:,:,:,0], [batch_size, GRID_SIZE, GRID_SIZE, NO_BOUNDING_BOX, 1])
+        pred_classes = tf.reshape(pred[:, : val_1], [batch_size, GRID_SIZE, GRID_SIZE, NO_CLASSES])
+        pred_scales = tf.reshape(pred[:, val_1: val_2], [batch_size, GRID_SIZE, GRID_SIZE, NO_BOUNDING_BOX])
+        pred_boxes = tf.reshape(pred[:, val_2:], [batch_size, GRID_SIZE, GRID_SIZE, NO_BOUNDING_BOX, 4])
+        
+        response = tf.reshape(actual[:,:,:,0], [batch_size, GRID_SIZE, GRID_SIZE, 1])
         boxes = tf.reshape(actual[:,:,:,1:5], [batch_size,GRID_SIZE, GRID_SIZE, 1, 4])
         boxes = tf.tile(boxes, [1,1,1, NO_BOUNDING_BOX, 1]) / IMAGE_SIZE
         classes = actual[:,:,:,5:]
@@ -141,7 +142,7 @@ def loss_layer(pred, actual, batch_size):
                 tf.square(pred_boxes[:, :, :, :, 3])])
         predict_boxes_tran = tf.transpose(predict_boxes_tran, [1, 2, 3, 4, 0])
 
-        iou_predict_truth = cal_iou(predict_box_tran,boxes)
+        iou_predict_truth = cal_iou(predict_boxes_tran,boxes)
 
         # calculate I tensor [BATCH_SIZE, CELL_SIZE, CELL_SIZE, BOXES_PER_CELL]
         object_mask = tf.reduce_max(iou_predict_truth, 3, keep_dims=True)
@@ -150,8 +151,8 @@ def loss_layer(pred, actual, batch_size):
         # calculate no_I tensor [CELL_SIZE, CELL_SIZE, BOXES_PER_CELL]
         noobject_mask = tf.ones_like(object_mask, dtype=tf.float32) - object_mask
         
-        boxes_tran = tf.stack([boxes[:, :, :, :, 0] * self.cell_size - offset,
-                               boxes[:, :, :, :, 1] * self.cell_size - tf.transpose(offset, (0, 2, 1, 3)),
+        boxes_tran = tf.stack([boxes[:, :, :, :, 0] * GRID_SIZE - offset,
+                               boxes[:, :, :, :, 1] * GRID_SIZE - tf.transpose(offset, (0, 2, 1, 3)),
                                tf.sqrt(boxes[:, :, :, :, 2]),
                                tf.sqrt(boxes[:, :, :, :, 3])])
         boxes_tran = tf.transpose(boxes_tran, [1, 2, 3, 4, 0])
@@ -161,11 +162,11 @@ def loss_layer(pred, actual, batch_size):
         class_loss = tf.reduce_mean(tf.reduce_sum(tf.square(class_delta), axis=[1, 2, 3]), name='class_loss') * CLASS_SCALE
 
         # object_loss
-        object_delta = object_mask * (predict_scales - iou_predict_truth)
+        object_delta = object_mask * (pred_scales - iou_predict_truth)
         object_loss = tf.reduce_mean(tf.reduce_sum(tf.square(object_delta), axis=[1, 2, 3]), name='object_loss') * OBJ_SCALE
         
         # noobject_loss
-        noobject_delta = noobject_mask * predict_scales
+        noobject_delta = noobject_mask * pred_scales
         noobject_loss = tf.reduce_mean(tf.reduce_sum(tf.square(noobject_delta), axis=[1, 2, 3]), name='noobject_loss') * NOOBJ_SCALE
 
         # coord_loss

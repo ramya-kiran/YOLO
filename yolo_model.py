@@ -40,7 +40,11 @@ def model(input_tensor):
     #     print(sess.run(tf.shape(flatten_1)))
     fc_1_out = fc_layer(flatten_1, 7*7*1024, 256, True, '9')
     fc_2_out = fc_layer(fc_1_out, 256, 256, True, '10')
-    fc_3_out = fc_layer(fc_2_out, 4096, 256, True, '11')
+    fc_3_out = fc_layer(fc_2_out, 256,TOTAL_OUTPUTS, True, '11')
+    #fc_4_out = fc_layer(fc_3_out, 4096, (), True, '12')
+    
+    # with tf.Session() as sess:
+    #     print(sess.run(tf.shape(fc_3_out)))
 
     return fc_3_out
     

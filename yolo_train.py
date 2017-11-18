@@ -18,7 +18,8 @@ if __name__ == '__main__':
     # Reading the tf files and obtaining images and labels
     filename_queue = tf.train.string_input_producer(args.train)
     image, label = read_and_decode(filename_queue)
-    batch = tf.train.shuffle_batch([image, label], batch_size=args.batch_size, capacity=800, num_threads=2, min_after_dequeue=200)
+    batch = tf.train.shuffle_batch([image, label], batch_size=args.batch_size, capacity=100, num_threads=2, min_after_dequeue=50)
+    
     
     # placeholders for input and labels
     X = tf.placeholder(tf.float32, [None, IMAGE_SIZE, IMAGE_SIZE, CHANNEL], name='X')
@@ -26,14 +27,14 @@ if __name__ == '__main__':
     
     # passing the parameters to modela and getting output
     y_hat = model(X)
-
-    total_loss = loss_layer(y_hat, y, args.batch_size)
-    tf.summary.scalar('total_loss', total_loss)
     
-    global_step = tf.get_variable(
-            'global_step', [], initializer=tf.constant_initializer(0), trainable=False)
-    learning_rate = tf.train.exponentail_decay(INITIAL_LEARNING_RATE, global_step, DECAY_STEPS, DECAY_RATE, STAIRCASE, name='learning_rate')
-    optimizer = tf.train.GradientDescentOptimizer(learning_rate = learning_rate).minimize(total_loss, global_step = global_step)
+    total_loss = loss_layer(y_hat, y, args.batch_size)
+    #tf.summary.scalar('total_loss', total_loss)
+    
+    #global_step = tf.get_variable(
+    #         'global_step', [], initializer=tf.constant_initializer(0), trainable=False)
+    # learning_rate = tf.train.exponentail_decay(INITIAL_LEARNING_RATE, global_step, DECAY_STEPS, DECAY_RATE, STAIRCASE, name='learning_rate')
+    # optimizer = tf.train.GradientDescentOptimizer(learning_rate = learning_rate).minimize(total_loss, global_step = global_step)
 
     saver = tf.train.Saver()
 
@@ -41,24 +42,25 @@ if __name__ == '__main__':
         sess.run(tf.local_variables_initializer())
         sess.run(tf.global_variables_initializer())
         
-        merged_summary = tf.summary.merge_all()
-        writer = tf.summary.FileWriter(args.log, sess.graph)
-
+        #merged_summary = tf.summary.merge_all()
+        #writer = tf.summary.FileWriter(args.log, sess.graph)
+        
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(sess=sess, coord=coord)
-
+        
         
         for i in range(args.epochs):
-            images, labels = sess.run(batch)
-            sess.run(optimizer, feed_dict={X: images, y: labels})
+            img, lbl = sess.run(batch)
+            print(sess.run(total_loss, feed_dict={X: img, y: lbl}))
+            #sess.run(optimizer, feed_dict={X: images, y: labels})
             
             # Print training accuracy every 100 epochs
-            if (i+1) % 100 == 0:
-                print('loss val {}: {:.2f}'.format(i+1, sess.run(total_loss, feed_dict={X: images, y: labels})))
+            # if (i+1) % 100 == 0:
+            #     #print('loss val {}: {:.2f}'.format(i+1, sess.run(total_loss, feed_dict={X: images, y: labels})))
                 
-            if (i+1) % 1000 == 0:
-                params = saver.save(sess, '{}_{}.ckpt'.format(args.output, i+1))
-                print('Model saved: {}'.format(params))
+            # if (i+1) % 1000 == 0:
+            #     params = saver.save(sess, '{}_{}.ckpt'.format(args.output, i+1))
+            #     print('Model saved: {}'.format(params))
                 
         coord.request_stop()
         coord.join(threads)
