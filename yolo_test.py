@@ -20,4 +20,22 @@ if __name__ == '__main__':
     X = tf.placeholder(tf.float32, [None, IMAGE_SIZE, IMAGE_SIZE, CHANNEL], name='X')
     y = tf.placeholder(tf.float32, [None, GRID_SIZE, GRID_SIZE, 5+NO_CLASSES], name='labels')
     
+    y_hat = model(X)
+    result = interpret_output(y_hat)
     
+    saver = tf.train.Saver()
+    
+    with tf.Session() as sess:
+        new_saver = tf.train.import_meta_graph('/scratch/ramrao/vehicles/'+args.model + '.meta')
+        new_saver.restore(sess, '/scratch/ramrao/vehicles/'+ args.model)
+
+        coord = tf.train.Coordinator()
+        threads = tf.train.start_queue_runners(sess=sess, coord=coord)
+        
+        tf.set_random_seed(1)
+        images, labels = sess.run(batch)
+
+        coord.request_stop()
+        coord.join(threads)
+
+
