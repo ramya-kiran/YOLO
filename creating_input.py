@@ -21,8 +21,10 @@ def get_file_names():
 def get_images(names):
     images = np.zeros((len(names), 448, 448, CHANNEL), dtype=np.uint8)
     
+    # Images directory
     os.chdir('/scratch/ramrao/vehicles/JPEGImages/')
     for index,value in enumerate(names):
+        value = value[:-1] + '_co.png'
         print('Processing {}'.format(value))
         subprocess.call(["convert", value, "-resize", "448x448!", value])
         print(value)
@@ -33,11 +35,12 @@ def get_images(names):
 
 def get_labels(names):
     labels = np.zeros((len(names), GRID_SIZE, GRID_SIZE, 5+NO_CLASSES), dtype=np.uint8)
+    # Labels directory
     os.chdir('/scratch/ramrao/vehicles/labels/')
     for index,value in enumerate(names):
         to_store = np.zeros((GRID_SIZE, GRID_SIZE, 5+NO_CLASSES))
-        file_val = os.path.basename(os.path.normpath(value))
-        file_val = file_val[:-4] + '.txt'
+        #file_val = os.path.basename(os.path.normpath(value))
+        file_val = value[:-1] + '_co.txt'
         value = os.path.join('/scratch/ramrao/vehicles/labels',file_val)
         print(value)
         with open(value, 'r') as lf:
@@ -57,6 +60,7 @@ def get_labels(names):
             labels[index] = to_store
             
     print('Done with labels')
+    os.chdir('/scratch/ramrao/vehicles/')
     return labels
 
 def convert(imgs, labels, output):
@@ -74,13 +78,17 @@ def convert(imgs, labels, output):
             
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-o', '--output', default='result.tfrecords', help='output filename, default to result.tfrecords')
+    parser.add_argument('output_file', help='output filename')
+    parser.add_argument('input_file', help='input filename')
 
     args = parser.parse_args()
-    res = get_file_names()
+    #res = get_file_names()
+    in_path = os.path.join('/scratch/ramrao/vehicles/folds', args.input_file)
+    with open(in_path, 'r') as rf:
+        res = rf.readlines()
     images = get_images(res)
     labels = get_labels(res)
-    convert(images, labels, args.output)
+    convert(images, labels, args.output_file)
 
 
 if __name__ == '__main__':
