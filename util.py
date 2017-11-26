@@ -194,24 +194,27 @@ def loss_layer(pred, actual, batch_size):
 
         
         
-def interpret_output(self, output):
-    probs = np.zeros((self.cell_size, self.cell_size,
-                      self.boxes_per_cell, self.num_class))
-    class_probs = np.reshape(output[0:self.boundary1], (self.cell_size, self.cell_size, self.num_class))
-    scales = np.reshape(output[self.boundary1:self.boundary2], (self.cell_size, self.cell_size, self.boxes_per_cell))
-    boxes = np.reshape(output[self.boundary2:], (self.cell_size, self.cell_size, self.boxes_per_cell, 4))
-    offset = np.transpose(np.reshape(np.array([np.arange(self.cell_size)] * self.cell_size * self.boxes_per_cell),
-                                         [self.boxes_per_cell, self.cell_size, self.cell_size]), (1, 2, 0))
+def interpret_output(output):
+    probs = np.zeros((GRID_SIZE, GRID_SIZE,
+                      NO_BOUNDING_BOX, NO_CLASSES))
+
+    val_1 = GRID_SIZE * GRID_SIZE * NO_CLASSES
+    val_2 = val_1 + (GRID_SIZE * GRID_SIZE * NO_BOUNDING_BOX)
+    class_probs = np.reshape(output[0:val_1], (GRID_SIZE, GRID_SIZE, NO_CLASSES))
+    scales = np.reshape(output[val_1:val_2], (GRID_SIZE, GRID_SIZE, NO_BOUNDING_BOX))
+    boxes = np.reshape(output[val_2:], (GRID_SIZE, GRID_SIZE, NO_BOUNDING_BOX, 4))
+    offset = np.transpose(np.reshape(np.array([np.arange(GRID_SIZE)] * GRID_SIZE * NO_BOUNDING_BOX),
+                                         [NO_BOUNDING_BOX, GRID_SIZE, GRID_SIZE]), (1, 2, 0))
 
     boxes[:, :, :, 0] += offset
     boxes[:, :, :, 1] += np.transpose(offset, (1, 0, 2))
-    boxes[:, :, :, :2] = 1.0 * boxes[:, :, :, 0:2] / self.cell_size
+    boxes[:, :, :, :2] = 1.0 * boxes[:, :, :, 0:2] / GRID_SIZE
     boxes[:, :, :, 2:] = np.square(boxes[:, :, :, 2:])
     
-    boxes *= self.image_size
+    boxes *= IMAGE_SIZE
 
-    for i in range(self.boxes_per_cell):
-        for j in range(self.num_class):
+    for i in range(NO_BOUNDING_BOX):
+        for j in range(NO_CLASSES):
             probs[:, :, i, j] = np.multiply(
                 class_probs[:, :, j], scales[:, :, i])
 
