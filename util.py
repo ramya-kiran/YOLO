@@ -218,7 +218,7 @@ def interpret_output(output):
             probs[:, :, i, j] = np.multiply(
                 class_probs[:, :, j], scales[:, :, i])
 
-    filter_mat_probs = np.array(probs >= self.threshold, dtype='bool')
+    filter_mat_probs = np.array(probs >= PROB_THRESHOLD, dtype='bool')
     filter_mat_boxes = np.nonzero(filter_mat_probs)
     boxes_filtered = boxes[filter_mat_boxes[0],
                            filter_mat_boxes[1], filter_mat_boxes[2]]
@@ -235,7 +235,7 @@ def interpret_output(output):
         if probs_filtered[i] == 0:
             continue
         for j in range(i + 1, len(boxes_filtered)):
-            if self.iou(boxes_filtered[i], boxes_filtered[j]) > self.iou_threshold:
+            if iou(boxes_filtered[i], boxes_filtered[j]) > IOU_THRESHOLD:
                 probs_filtered[j] = 0.0
                 
     filter_iou = np.array(probs_filtered > 0.0, dtype='bool')
@@ -245,12 +245,12 @@ def interpret_output(output):
 
     result = []
     for i in range(len(boxes_filtered)):
-        result.append([self.classes[classes_num_filtered[i]], boxes_filtered[i][0], boxes_filtered[
+        result.append([CLASSES[classes_num_filtered[i]], boxes_filtered[i][0], boxes_filtered[
             i][1], boxes_filtered[i][2], boxes_filtered[i][3], probs_filtered[i]])
 
     return result
 
-def iou(self, box1, box2):
+def iou(box1, box2):
     tb = min(box1[0] + 0.5 * box1[2], box2[0] + 0.5 * box2[2]) - \
          max(box1[0] - 0.5 * box1[2], box2[0] - 0.5 * box2[2])
     lr = min(box1[1] + 0.5 * box1[3], box2[1] + 0.5 * box2[3]) - \

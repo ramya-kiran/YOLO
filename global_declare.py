@@ -25,3 +25,8 @@ CLASS_SCALE= 2.0
 NOOBJ_SCALE = 1.0
 OBJ_SCALE = 2.0
 COORD_SCALE = 5.0
+
+PROB_THRESHOLD = 0.2
+IOU_THRESHOLD = 0.5
+
+CLASSES = ['car', 'truck', 'tractor', 'campingcar', 'van', 'pickup' , 'boat', 'plane', 'other']
