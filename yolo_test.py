@@ -4,10 +4,14 @@ from util import *
 from global_declare import *
 from yolo_model import *
 import time
+import scipy.ndimage
+import os
+import cv2
 import numpy as np
 
 def detect(res, img, heights, width):
     values = interpret_output(res)
+    print(values)
     
     for i in range(len(values)):
         values[i][1] *= (1 * width / IMAGE_SIZE) 
@@ -24,10 +28,8 @@ def detect(res, img, heights, width):
         cv2.rectangle(img, (x - w, y - h - 20),
                       (x + w, y - h), (125, 125, 125), -1)
         cv2.putText(img, result[i][0] + ' : %.2f' % result[i][5], (x - w + 5, y - h - 7), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.CV_AA)
-
-    imshow('Image', img)
-    cv2.waitKey(wait)
-    imwrite('/scratch/ramrao/test/', img)
+        
+    cv2.imwrite('/scratch/ramrao/vehicles/test/image.png', img)
     
     return 1
 
@@ -40,7 +42,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     with open(args.source, 'r') as rf:
-        names = readlines()
+        names = rf.readlines()
 
     X = tf.placeholder(tf.float32, [None, IMAGE_SIZE, IMAGE_SIZE, CHANNEL], name='X')
     #y = tf.placeholder(tf.float32, [None, GRID_SIZE, GRID_SIZE, 5+NO_CLASSES], name='labels')
@@ -50,26 +52,24 @@ if __name__ == '__main__':
     saver = tf.train.Saver()
         
     with tf.Session() as sess:
-        new_saver = tf.train.import_meta_graph('/scratch/ramrao/vehicles/'+args.model + '.meta')
-        new_saver.restore(sess, '/scratch/ramrao/vehicles/'+ args.model)
+        new_saver = tf.train.import_meta_graph('/scratch/ramrao/vehicles/model/'+args.model + '.meta')
+        new_saver.restore(sess, '/scratch/ramrao/vehicles/model/'+ args.model)
 
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(sess=sess, coord=coord)
         
         for index,img in enumerate(names):
-            img = os.path.join(args.source, img +'_co.png')
-            input_img = scipy.ndimage.imread(img, mode='RGB')
-            img_h, img_w, _ = img.shape
-            inputs = cv2.resize(img, (self.image_size, self.image_size))
-            inputs = cv2.cvtColor(input_img, cv2.COLOR_BGR2RGB).astype(np.float32)
+            img = os.path.join('/scratch/ramrao/vehicles/JPEGImages/', img[:-1] +'_co.png')
+            input_img = cv2.imread(img)
+            img_h, img_w, _ = input_img.shape
+            inputs = cv2.resize(input_img, (IMAGE_SIZE, IMAGE_SIZE))
+            inputs = cv2.cvtColor(inputs, cv2.COLOR_BGR2RGB).astype(np.float32)
             inputs = (inputs / 255.0) * 2.0 - 1.0
-            inputs = np.reshape(inputs, (1, self.image_size, self.image_size, 3))
+            inputs = np.reshape(inputs, (1, IMAGE_SIZE, IMAGE_SIZE, 3))
             
-            model_ouptut = sess.run(y_hat, feed_dict={X : inputs})
-            detect(model_output, img, img_h, img_w)
-            
-            sess.run(result, feed_dict={X:input_img})
-            detect(result, input_img)
+            model_output = sess.run(y_hat, feed_dict={X : inputs})
+            detect(model_output[0], input_img, img_h, img_w)
+            break
             
         coord.request_stop()
         coord.join(threads)

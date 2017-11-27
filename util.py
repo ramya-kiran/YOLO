@@ -195,11 +195,12 @@ def loss_layer(pred, actual, batch_size):
         
         
 def interpret_output(output):
-    probs = np.zeros((GRID_SIZE, GRID_SIZE,
-                      NO_BOUNDING_BOX, NO_CLASSES))
+    print(output.shape)
+    probs = np.zeros((GRID_SIZE, GRID_SIZE,NO_BOUNDING_BOX, NO_CLASSES))
 
     val_1 = GRID_SIZE * GRID_SIZE * NO_CLASSES
     val_2 = val_1 + (GRID_SIZE * GRID_SIZE * NO_BOUNDING_BOX)
+    
     class_probs = np.reshape(output[0:val_1], (GRID_SIZE, GRID_SIZE, NO_CLASSES))
     scales = np.reshape(output[val_1:val_2], (GRID_SIZE, GRID_SIZE, NO_BOUNDING_BOX))
     boxes = np.reshape(output[val_2:], (GRID_SIZE, GRID_SIZE, NO_BOUNDING_BOX, 4))
