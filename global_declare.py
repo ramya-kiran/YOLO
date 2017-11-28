@@ -9,7 +9,7 @@ CHANNEL = 3
 IMAGE_SIZE = 448
 
 # cell grid size
-GRID_SIZE = 7
+GRID_SIZE = 14
 NO_BOUNDING_BOX = 2
 NO_CLASSES = 9
 TOTAL_OUTPUTS = GRID_SIZE * GRID_SIZE * (NO_CLASSES + NO_BOUNDING_BOX * 5)
@@ -26,7 +26,7 @@ NOOBJ_SCALE = 1.0
 OBJ_SCALE = 2.0
 COORD_SCALE = 5.0
 
-PROB_THRESHOLD = 0.2
+PROB_THRESHOLD = 0.01
 IOU_THRESHOLD = 0.5
 
 CLASSES = ['car', 'truck', 'tractor', 'campingcar', 'van', 'pickup' , 'boat', 'plane', 'other']

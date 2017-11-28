@@ -57,6 +57,7 @@ if __name__ == '__main__':
             #Print training accuracy every 100 epochs
             if (i+1) % 89 == 0:
                 print('loss val {}: {:.2f}'.format(i+1, sess.run(total_loss, feed_dict={X:img, y:lbl})))
+                print(sess.run(y_hat, feed_dict={X:img}))
                 
             if (i+1) % 89 == 0:
                 params = saver.save(sess, '{}_{}.ckpt'.format(args.output, i+1))

@@ -6,6 +6,7 @@ import os.path
 from global_declare import *
 import subprocess
 import os
+import cv2
 
 
 def _bytes_feature(value):
@@ -26,9 +27,13 @@ def get_images(names):
     for index,value in enumerate(names):
         value = value[:-1] + '_co.png'
         print('Processing {}'.format(value))
-        subprocess.call(["convert", value, "-resize", "448x448!", value])
-        print(value)
-        images[index] = scipy.ndimage.imread(value, mode='RGB')
+        #subprocess.call(["convert", value, "-resize", "448x448!", value])
+        #print(value)
+        image = cv2.imread(value)
+        image = cv2.resize(image, (IMAGE_SIZE, IMAGE_SIZE))
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB).astype(np.float32)
+        images[index] = (image / 255.0) * 2.0 - 1.0
+        #images[index] = scipy.ndimage.imread(value, mode='RGB')
         
     return images
         
