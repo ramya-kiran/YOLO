@@ -50,36 +50,6 @@ def alter_image(image):
         return altered_image
 
 
-# convolutional layer to be used by the model 
-def convolution_layer(input_imgs, outputs, in_size, stride, name):
-    with tf.name_scope('conv_' + name):
-        weights = tf.get_variable("w_"+name, [3, 3, in_size, outputs], initializer=tf.contrib.layers.xavier_initializer())
-        biases = tf.get_variable("b_"+name, [outputs], initializer=tf.constant_initializer(0.0))
-        tf.summary.histogram('conv_w_'+name, weights)
-        tf.summary.histogram('conv_b_'+name, biases)
-        conv = tf.nn.conv2d(input_imgs, weights, strides=[1,stride, stride, 1], padding='SAME', name='conv_w_'+name)
-        conv_biased = tf.add(conv, biases, name='conv_b'+name)
-        
-        return tf.maximum(ALPHA*conv_biased, conv_biased, name='leaky_relu_'+name)
-
-
-# pooling layer
-def pooling_layer(input_tensor, pool_size, pool_stride, name):
-    with tf.name_scope('pool_'+name):
-        return tf.nn.max_pool(input_tensor, ksize=[1,pool_size, pool_size, 1], strides=[1,pool_stride, pool_stride,1], padding='SAME', name = 'pool_'+name)
-        
-
-# fully connected layer
-def fc_layer(input_tensor, no_in, no_out, leaky, name):
-    with tf.name_scope('fc_'+name):
-        weights = tf.get_variable("fc_w_"+name, [no_in, no_out], initializer=tf.contrib.layers.xavier_initializer())
-        biases = tf.get_variable("fc_b_"+name, [no_out], initializer=tf.constant_initializer(0.0))
-        y = tf.add(tf.matmul(input_tensor, weights), biases)
-        tf.summary.histogram('fc_w'+name, weights)
-        tf.summary.histogram('fc_b'+name, biases)
-        
-        return(tf.maximum(ALPHA*y, y, name='fc_out'+name))
-
 def cal_iou(boxes1, boxes2):
     with tf.variable_scope('iou'):
         boxes1 = tf.stack([boxes1[:, :, :, :, 0] - boxes1[:, :, :, :, 2] / 2.0,

@@ -32,10 +32,10 @@ if __name__ == '__main__':
     tf.summary.scalar('total_loss', total_loss)
     
     #global_step = tf.get_variable(
-#            'global_step', [], initializer=tf.constant_initializer(0), trainable=False)
+     #   'global_step', [], initializer=tf.constant_initializer(0), trainable=False)
     #learning_rate = tf.train.exponentail_decay(INITIAL_LEARNING_RATE, global_step, DECAY_STEPS, DECAY_RATE, STAIRCASE, name='learning_rate')
-    #optimizer = tf.train.GradientDescentOptimizer(learning_rate = INITIAL_LEARNING_RATE).minimize(total_loss, global_step = global_step)
-    train = tf.train.AdamOptimizer(1e-4).minimize(total_loss)
+    #optimizer = tf.train.GradientDescentOptimizer(0.01).minimize(total_loss)
+    train = tf.train.AdamOptimizer(1e-3).minimize(total_loss)
     
     saver = tf.train.Saver()
 
