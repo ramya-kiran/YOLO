@@ -35,7 +35,7 @@ if __name__ == '__main__':
      #   'global_step', [], initializer=tf.constant_initializer(0), trainable=False)
     #learning_rate = tf.train.exponentail_decay(INITIAL_LEARNING_RATE, global_step, DECAY_STEPS, DECAY_RATE, STAIRCASE, name='learning_rate')
     #optimizer = tf.train.GradientDescentOptimizer(0.01).minimize(total_loss)
-    train = tf.train.AdamOptimizer(1e-3).minimize(total_loss)
+    train = tf.train.AdamOptimizer(1e-4).minimize(total_loss)
     
     saver = tf.train.Saver()
 
@@ -55,7 +55,7 @@ if __name__ == '__main__':
             sess.run(train, feed_dict={X: img, y: lbl})
             
             #Print training accuracy every 100 epochs
-            if (i+1) % 89 == 0:
+            if (i+1) % 10 == 0:
                 print('loss val {}: {:.2f}'.format(i+1, sess.run(total_loss, feed_dict={X:img, y:lbl})))
                 print(sess.run(y_hat, feed_dict={X:img}))
                 
