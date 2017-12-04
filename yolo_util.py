@@ -1,6 +1,7 @@
 import tensorflow as tf
 from global_declare import *
 import numpy as np
+import copy
 
 # reading and decoding tf records
 
@@ -50,3 +51,37 @@ def alter_image(image):
         return altered_image
 
 
+def loss_layer(model_output, ground_truth, batch_size):
+    anchors = compute_anchors()
+    batch_size, grid_w, grid_h, _ = model_output
+    inter_out = np.reshape(model_output, (batch_size, NO_BOUNDING_BOX, 5+NO_CLASSES, GRID_SIZE, GRID_SIZE))
+    x,y,w,h,conf,prob = np.split(inter_out, (1,2,3,4,5), axis=2)
+    x = tf.sigmoid(x)
+    y = tf.sigmoid(y)
+    conf = tf.sigmoid(conf)
+    prob = np.transpose(prob, (0,2,1,3,4))
+    prob = tf.nn.softmax(prob, dim=1)
+    
+    tw = np.zeros(w.shape, dtype=np.float32)
+    th = np.zeros(h.shape, dtype=np.float32)
+    tx = np.tile(0.5, x.shape).astype(np.float32)
+    ty = np.tile(0.5, y.shape).astype(np.float32)
+
+    box_learning_scale = np.tile(0.1, x.shape).astype(np.float32)
+    
+    tconf = np.zeros(conf.shape, dtype=np.float32)
+    conf_learning_scale = np.tile(0.1, conf.shape).astype(np.float32)
+    
+    tprob = copy.deepcopy(prob)
+    
+    x_offset = np.broadcast_to(np.arange(grid_w, dtype=np.float32) x.shape[1:])
+    y_offset = np.broadcast_to(np.arange(grid_h, dtype=np.float32).reshape(grid_h, 1), y.shape[1:])
+
+    w_anchor = np.broadcast_to(np.reshape(np.array(anchors, dtype=np.float32)[:, 0], (NO_BOUNDING_BOX, 1, 1, 1)), w.shape[1:])
+    h_anchor = np.broadcast_to(np.reshape(np.array(anchors, dtype=np.float32)[:, 1], (NO_BOUNDING_BOX, 1, 1, 1)), h.shape[1:])
+
+    collect_iou = []
+    
+    
+    return total_loss
+    
