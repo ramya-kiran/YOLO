@@ -55,11 +55,12 @@ if __name__ == '__main__':
             sess.run(train, feed_dict={X: img, y: lbl})
             
             #Print training accuracy every 100 epochs
-            if (i+1) % 10 == 0:
+            if (i+1) % 50 == 0:
                 print('loss val {}: {:.2f}'.format(i+1, sess.run(total_loss, feed_dict={X:img, y:lbl})))
-                print(sess.run(y_hat, feed_dict={X:img}))
+                #print(sess.run(y_hat, feed_dict={X:img}))
                 
             if (i+1) % 89 == 0:
+                print('loss val {}: {:.2f}'.format(i+1, sess.run(total_loss, feed_dict={X:img, y:lbl})))
                 params = saver.save(sess, '{}_{}.ckpt'.format(args.output, i+1))
                 print('Model saved: {}'.format(params))
                 

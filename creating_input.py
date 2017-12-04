@@ -32,7 +32,7 @@ def get_images(names):
         image = cv2.imread(value)
         image = cv2.resize(image, (IMAGE_SIZE, IMAGE_SIZE))
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB).astype(np.float32)
-        images[index] = (image / 255.0) * 2.0 - 1.0
+        images[index] = (image / 255.0)
         #images[index] = scipy.ndimage.imread(value, mode='RGB')
         
     return images

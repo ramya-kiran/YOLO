@@ -11,7 +11,7 @@ import numpy as np
 
 def detect(res, img, height, width):
     values = interpret_output(res)
-    print(values)
+    #print(values)
     
     for i in range(len(values)):
         values[i][1] *= (1 * width / IMAGE_SIZE) 
@@ -19,6 +19,7 @@ def detect(res, img, height, width):
         values[i][1] *= (1 * width / IMAGE_SIZE) 
         values[i][1] *= (1 * height / IMAGE_SIZE) 
 
+    print(values)
     for i in range(len(values)):
         x = int(values[i][1])
         y = int(values[i][2])
@@ -68,7 +69,7 @@ if __name__ == '__main__':
             inputs = np.reshape(inputs, (1, IMAGE_SIZE, IMAGE_SIZE, 3))
             
             model_output = sess.run(y_hat, feed_dict={X : inputs})
-            print(model_output.shape)
+            #print(model_output.shape)
             detect(model_output[0], input_img, img_h, img_w)
             break
             

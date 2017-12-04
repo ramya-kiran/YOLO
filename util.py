@@ -188,7 +188,7 @@ def interpret_output(output):
         for j in range(NO_CLASSES):
             probs[:, :, i, j] = np.multiply(
                 class_probs[:, :, j], scales[:, :, i])
-    print(class_probs)
+    #print(class_probs)
     filter_mat_probs = np.array(probs >= PROB_THRESHOLD, dtype='bool')
     filter_mat_boxes = np.nonzero(filter_mat_probs)
     boxes_filtered = boxes[filter_mat_boxes[0],
