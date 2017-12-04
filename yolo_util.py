@@ -81,6 +81,23 @@ def loss_layer(model_output, ground_truth, batch_size):
     h_anchor = np.broadcast_to(np.reshape(np.array(anchors, dtype=np.float32)[:, 1], (NO_BOUNDING_BOX, 1, 1, 1)), h.shape[1:])
 
     collect_iou = []
+    for batch in range(batch_size):
+            n_truth_boxes = len(t[batch])
+            box_x = (x[batch] + x_offset) / grid_w
+            box_y = (y[batch] + y_offset) / grid_h
+            box_w = tf.exp(w[batch]) * w_anchor / grid_w
+            box_h = tf.exp(h[batch]) * h_anchor / grid_h
+
+            ious = []
+            for truth_index in range(n_truth_boxes):
+                truth_box_x = Variable(np.broadcast_to(np.array(t[batch][truth_index]["x"], dtype=np.float32), box_x.shape))
+                truth_box_y = Variable(np.broadcast_to(np.array(t[batch][truth_index]["y"], dtype=np.float32), box_y.shape))
+                truth_box_w = Variable(np.broadcast_to(np.array(t[batch][truth_index]["w"], dtype=np.float32), box_w.shape))
+                truth_box_h = Variable(np.broadcast_to(np.array(t[batch][truth_index]["h"], dtype=np.float32), box_h.shape))
+                ious.append(multi_box_iou(Box(box_x, box_y, box_w, box_h), Box(truth_box_x, truth_box_y, truth_box_w, truth_box_h)).data.get())  
+            ious = np.array(ious)
+            best_ious.append(np.max(ious, axis=0))
+        best_ious = np.array(best_ious)
     
     
     return total_loss

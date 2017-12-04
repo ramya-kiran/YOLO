@@ -71,18 +71,19 @@ def model(input_tensor):
     # Detection network
     conv_20_out = convolution_layer(conv_19_out, 1024, 1024, 3,1, '20')
     conv_20_out = slim.batch_norm(conv_20_out, center=True, scale=True, epsilon=1e-5, is_training=True)
-    conv_21_out = convolution_layer(conv_20_out, (5 * 5 + NO_CLASSES), 1024, 1,1, '21')
+    conv_21_out = convolution_layer(conv_20_out, TOTAL_OUTPUTS, 1024, 1,1, '21')
+    print(conv_21_out.shape)
     conv_21_out = slim.batch_norm(conv_21_out, center=True, scale=True, epsilon=1e-5, is_training=True)
     # conv_22_out = convolution_layer(conv_21_out, 1024, TOTAL_OUTPUTS, 3,1, '22')
     # conv_23_out = convolution_layer(conv_22_out, TOTAL_OUTPUTS, 1024, 1,1, '23')
     # conv_24_out = convolution_layer(conv_23_out, 1024, TOTAL_OUTPUTS, 3,1, '24')
     # conv_24_out = convolution_layer(conv_24_out, TOTAL_OUTPUTS, 1024, 1,1, '25')
     
-    #final_output = tf.reshape(conv_21_out, [-1, 7*7*TOTAL_OUTPUTS])
+    final_output = tf.reshape(conv_21_out, [-1, 7*7*(TOTAL_OUTPUTS)])
+    print(final_output.shape)
 
-    #fc_1_out = fc_layer(final_output, 7*7*TOTAL_OUTPUTS, TOTAL_OUTPUTS, True, '1')
-
-    return conv_21_out
+    fc_1_out = fc_layer(final_output, 7*7*TOTAL_OUTPUTS, TOTAL_OUTPUTS, True, '1')
+    return fc_1_out
     
 
 # convolutional layer to be used by the model                                                                         
